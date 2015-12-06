@@ -121,7 +121,29 @@ module AmortizedQ : QUEUE = struct
    * the fact that the check function is called at the end of insert
    * and at the end of rem.  What representation invariant does it 
    * help to ensure?  *)
-  let rep_inv (lenf,front,lenb,back) = failwith "unimplemented";; 
+
+  let get_len (l: 'a LL.llist) =
+    let rec helper list count = 
+      match LL.reveal l with
+      | LL.Nil -> count
+      | LL.Cons(hd, tl) -> helper tl (count + 1)
+    in
+    helper l 0
+	   
+  let rep_inv (lenf,front,lenb,back) =
+    (get_len front = lenf)
+    && (get_len back = lenb) 
+    && (lenb <= lenf)
+    && (if lenf = 0 then (front = LL.empty) && (back = LL.empty)
+	else true)
+    (*&& (match Q.rem (lenf,front,lenb,back) with
+	| None -> (front = LL.empty) && (back = LL.empty)
+	| Some(hd, (lenf', front', lenb', back')) ->
+      	   if (lenf = lenb) then
+	     (lenf' = (lenf + lenb -1)) && (lenb' = 0)
+	   else
+	     (lenf' = lenf -1) && (lenb' = lenb))
+     *)
 
   let emp = (0, LL.empty, 0, LL.empty)
 
@@ -172,8 +194,31 @@ module Performance (Q:QUEUE) : PERF = struct
    *
    * EXPLAIN WHAT YOUR TEST DOES IN A COMMENT
    *)
-  let test1 (n:int) = 0.0;;
-
+    open Random;;
+    exception CantReach
+		
+    let runTest1 q =
+      if q =  Q.emp then
+	Q.ins (Random.int 100, q)
+      else
+	if Random.float 1.0 > 0.5 then
+	  match Q.rem q with
+	  | None -> raise(CantReach)
+	  | Some(_, q') -> q'
+	else Q.ins (Random.int 100, q)
+    ;;
+      
+    let test1 (n:int) =
+      let rec tester count totalTime q =
+	if count = 0 then totalTime
+	else
+	  let time = (Timing.time_fun runTest1 q) in
+	  let q' = runTest1 q in
+	  tester (count-1) (totalTime +. time) q' 
+      in
+      tester (n/2) 0.0 Q.emp 
+    ;;
+      
   (* test2:
    *
    * Executes a series of n queue operations and returns time taken.
@@ -195,7 +240,28 @@ module Performance (Q:QUEUE) : PERF = struct
    *
    * EXPLAIN WHAT YOUR TEST DOES IN A COMMENT
    *)
-  let test2 (n:int) = 0.0;;
+      		
+    let runTest2 q =
+      if q =  Q.emp then
+	Q.ins (Random.int 100, q)
+      else
+	if Random.float 1.0 > 0.5 then
+	  match Q.rem q with
+	  | None -> raise(CantReach)
+	  | Some(_, q') -> q
+	else Q.ins (Random.int 100, q)
+    ;;
+      
+    let test2 (n:int) =
+      let rec tester count totalTime q =
+	if count = 0 then totalTime
+	else
+	  let time = (Timing.time_fun runTest2 q) in
+	  let q' = runTest1 q in
+	  tester (count-1) (totalTime +. time) q' 
+      in
+      tester (n/2) 0.0 Q.emp 
+    ;;
 end;;
 
 module SlowestP = Performance(SlowestQ);;
