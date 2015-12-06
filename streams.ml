@@ -59,31 +59,35 @@ let rec ones : num stream =
 (* Implement the head and tail functions *)
 
 let head (s:'a stream) : 'a =
-  raise (Failure "unimplemented")
+  match force s with
+  | Cons (hd, _) -> hd
 ;;
 
 let tail (s:'a stream) : 'a stream =
-  raise (Failure "unimplemented")
+  match force s with
+  | Cons (_, tl) -> tl
 ;;
 
 (*>* Problem 2.1.b *>*)
 (* Implement map *)
 
 let rec map (f:'a -> 'b) (s:'a stream) : 'b stream =
-  raise (Failure "unimplemented")
+  lazy(Cons(f (head s), map f (tail s)))
 ;;
 
 (*>* Problem 2.1.c *>*)
 (* Define the infinite stream of natural numbers *)
-let rec nats : num stream = raise (Failure "unimplemented") ;;
-
+let rec make_nats (i:num) = lazy(Cons(i, make_nats ((+/) i one)))
+let rec nats : num stream = make_nats zero
+  					     
 (*>* Problem 2.1.d *>*)
 (* Write a function nth, which returns the nth element of a
    stream. NOTE: the function nth should be zero-indexed. In other
    words, "nth 0 s" should be equivalent to "head s". *)
 
 let rec nth (n:num) (s:'a stream) : 'a =
-  raise (Failure "unimplemented")
+  if (=/) n zero then head s
+  else nth ((-/) n one) (tail s)
 ;;
 
 (*>* Problem 2.1.e *>*)
@@ -96,8 +100,12 @@ let rec nth (n:num) (s:'a stream) : 'a =
    incompletenesses or unusual aspects of your function.
 *)
 
-let merge (s1:num stream) (s2:num stream) : num stream =
-  raise (Failure "unimplemented")
+let rec merge (s1:num stream) (s2:num stream) : num stream =
+  lazy(
+      if (<=/) (head s1) (head s2) then
+	Cons(head s1, merge (tail s1) s2)
+      else
+	Cons (head s2, merge (tail s2) s1))
 ;;
 
 (*>* Problem 2.1.f *>*)
@@ -124,33 +132,45 @@ let p21f = "" ;;
  * Such a spreadsheet will need to support the following operations:
  *)
 
-type 'a spread_sheet = num;; (* change me! *)
+type 'a spread_sheet = 'a stream stream 
 
 (* you can assume all coordinates given are non-negative *)
 type coordinates = num * num ;;
 
 (* a spreadsheet containing all zeros *)
-let zeros : num spread_sheet = num_of_int 0;; (* change me *)
+let rec create_zeros = lazy(Cons(zero, create_zeros));;
+let rec create_zero_streams = lazy(Cons(create_zeros, create_zero_streams));;   
+let zeros : num spread_sheet = create_zero_streams 
 
 (* return the element at the (i,j) coordinate in ss *)
 let get ((i,j):coordinates) (ss:'a spread_sheet) : 'a = 
-  failwith "unimplemented"
+  nth j (nth i ss)
 ;;
 
 (* create a new spreadsheet where the (i,j) element of the spreadsheet
  * contains f i j xij  when xij was the (i,j) element of the input spreadsheet
  *)
+let rec map_j (f: num -> num -> 'a -> 'b)(i: num)(index: num stream)(s: 'a stream): 'b stream =
+  lazy(Cons(f i (head index) (head s), map_j f i (tail index) (tail s)))
+;;
+  
+let rec map_i (f: num -> num -> 'a -> 'b)(index: num stream)(s: 'a spread_sheet): 'b spread_sheet =
+  lazy(Cons(map_j f (head index) nats (head s), map_i f (tail index) (tail s)))
+  
 let map_all (f:num -> num -> 'a -> 'b) (ss:'a spread_sheet) : 'b spread_sheet = 
-  failwith "unimplemented"
+    map_i f nats ss
 ;;
 
 (* create an infinite multiplication table in which every cell contains the
  * product of its indices *)
-let multiplication_table = num_of_int 0;; (* change me *)
+let mult_func (i:num)(j:num)(elt: 'a): num = ( */ ) i j
+
+let multiplication_table = map_all mult_func zeros 
 
 (* produce a spreadsheet in which cell (i,j) contains the ith element
  * of is and the jth element of js *)
 let cross_product (is:'a stream) (js:'b stream) : ('a * 'b) spread_sheet =
-  failwith "unimplemented"
+  let get_val i j elt = (nth i is, nth j js)
+  in map_all get_val zeros
 ;;
 
