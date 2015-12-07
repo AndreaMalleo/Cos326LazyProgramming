@@ -198,14 +198,15 @@ module Performance (Q:QUEUE) : PERF = struct
     exception CantReach
 		
     let runTest1 q =
-      if q =  Q.emp then
+   (*   if q =  Q.emp then
 	Q.ins (Random.int 100, q)
       else
 	if Random.float 1.0 > 0.5 then
 	  match Q.rem q with
 	  | None -> raise(CantReach)
 	  | Some(_, q') -> q'
-	else Q.ins (Random.int 100, q)
+	else Q.ins (Random.int 100, q)*)
+      Q.ins (Random.int 100, q)
     ;;
       
     let test1 (n:int) =
@@ -241,7 +242,8 @@ module Performance (Q:QUEUE) : PERF = struct
    * EXPLAIN WHAT YOUR TEST DOES IN A COMMENT
    *)
       		
-    let runTest2 q =
+    let runTest2 (q,frac) =
+     (*
       if q =  Q.emp then
 	Q.ins (Random.int 100, q)
       else
@@ -249,15 +251,22 @@ module Performance (Q:QUEUE) : PERF = struct
 	  match Q.rem q with
 	  | None -> raise(CantReach)
 	  | Some(_, q') -> q
-	else Q.ins (Random.int 100, q)
+	else Q.ins (Random.int 100, q)*)
+       if (frac) > 0.6 then
+	 Q.ins (Random.int 100,q)
+      else 
+	 match Q.rem q with
+	 |None -> raise(CantReach)
+	 |Some(_,q') -> q
     ;;
       
-    let test2 (n:int) =
+    let test2 (n:int) = 
+      let fract x = (float_of_int x) /. ((float_of_int n) /. 4.0) in 
       let rec tester count totalTime q =
 	if count = 0 then totalTime
-	else
-	  let time = (Timing.time_fun runTest2 q) in
-	  let q' = runTest1 q in
+	else 
+	  let time = (Timing.time_fun runTest2 (q, fract count)) in
+	  let q' = runTest2 (q,fract count) in
 	  tester (count-1) (totalTime +. time) q' 
       in
       tester (n/2) 0.0 Q.emp 
@@ -310,10 +319,10 @@ let main () =
   List.iter experiment ns
 ;;
 
-(*
+
 
 (* uncomment this block to run tests, 
  * but please do not submit with it uncommented
  *)
 main ();;
-*)
+
