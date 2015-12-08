@@ -52,7 +52,21 @@ end;;
 module MemoFib (D : DICT with type key = int) : FIB =
 struct
 
-  let fib _ = failwith "unimplemented"                                                                                                   
+  let memoize (f: int -> int): int -> int =
+    let table = D.empty in
+    (fun n -> if D.mem n table then D.find n table
+	      else
+		(let s = f n in
+		D.add n s table;
+		s))   
+  ;;
+    
+  let rec fib (n:int): int =
+    if n > 1 then
+      memoize fib (n-1) + memoize fib (n-2)
+    else
+      n
+  ;;
 end;;
 
 module ManualMemoedFib = MemoFib(Map.Make(IntOrder));;

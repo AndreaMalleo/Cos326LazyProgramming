@@ -198,14 +198,6 @@ module Performance (Q:QUEUE) : PERF = struct
     exception CantReach
 		
     let runTest1 q =
-   (*   if q =  Q.emp then
-	Q.ins (Random.int 100, q)
-      else
-	if Random.float 1.0 > 0.5 then
-	  match Q.rem q with
-	  | None -> raise(CantReach)
-	  | Some(_, q') -> q'
-	else Q.ins (Random.int 100, q)*)
       Q.ins (Random.int 100, q)
     ;;
       
@@ -243,16 +235,7 @@ module Performance (Q:QUEUE) : PERF = struct
    *)
       		
     let runTest2 (q,frac) =
-     (*
-      if q =  Q.emp then
-	Q.ins (Random.int 100, q)
-      else
-	if Random.float 1.0 > 0.5 then
-	  match Q.rem q with
-	  | None -> raise(CantReach)
-	  | Some(_, q') -> q
-	else Q.ins (Random.int 100, q)*)
-       if (frac) > 0.6 then
+      if (frac) > 0.6 then
 	 Q.ins (Random.int 100,q)
       else 
 	 match Q.rem q with
