@@ -51,14 +51,20 @@ end;;
  * implementation of FIB memoized by hand *)
 module MemoFib (D : DICT with type key = int) : FIB =
 struct
+    
+  open Lazy;;
+  
+  let history = lazy(ref (D.empty))
 
-  let memoize (f: int -> int): int -> int =
-    let table = D.empty in
-    (fun n -> if D.mem n table then D.find n table
-	      else
-		(let s = f n in
-		D.add n s table; s))   
-  ;;
+  let memoize (f:int -> int): int -> int =
+    let f_memoed x =
+      try D.find x !(force history) with
+      | Not_found ->
+	 let result = f x in
+	 (force history) := D.add x result !(force history); 
+	 result
+    in
+    f_memoed
     
   let rec fib (n:int): int =
     if n > 1 then
@@ -75,14 +81,17 @@ module ManualMemoedFib = MemoFib(Map.Make(IntOrder));;
  *   Memoizer from memoizer.ml           *
  *   Map.Make to create a dictionary     *
  *   IntOrder from above                 *)
+  
 module AutoMemoedFib : FIB =
 struct
 
+  module AutoMemoizer = Memoizer(Map.Make(IntOrder));;
+				   
   let fib_body (recurse: int-> int) (n:int): int =
     if n > 1 then recurse (n-1) + recurse (n-2) 
       else n
 
-  let fib (n:int) = Memoizer.memo fib_body n 
+  let fib (n:int) = AutoMemoizer.memo fib_body n 
 
 end;;
 
@@ -119,14 +128,8 @@ let print_row n slow fast manual automated =
 let experiment (n:int) : unit =
   let slow n = if n > 42 then None else Some (time_fun Fib.fib n) in
   let fast = time_fun FastFib.fib  in   
-  let manual = 
-    (* time_fun ManualMemoedFib.fib *)  (* CHANGE THIS! *)
-    (fun n -> 0.) 
-  in   
-  let automated = 
-    (* time_fun AutoMemoedFib.fib *)    (* CHANGE THIS! *)
-    (fun n -> 0.) 
-  in  
+  let manual = time_fun ManualMemoedFib.fib in
+  let automated = time_fun AutoMemoedFib.fib in  
   print_row n (slow n) (fast n) (manual n) (automated n)
 ;;
 
@@ -139,11 +142,11 @@ let main () =
   List.iter experiment trials
 ;;
 
-(*
+
 
 (* uncomment this block to run tests, 
  * but please do not submit with it uncommented
  *)
 main ();;
-*)
+
 
