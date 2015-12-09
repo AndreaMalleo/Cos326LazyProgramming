@@ -52,24 +52,30 @@ end
 (**********************************)
 
 module type MEMOIZER =
-sig
-  type key
-
-  val memo : ((key -> 'a) -> (key -> 'a)) -> (key -> 'a)
+  sig
+    type key
+	   
+    val memo : ((key -> 'a) -> (key -> 'a)) -> (key -> 'a)
 end
-
+    
 (* Task 4.2:  Finish the generic memoizer *)
-
 module Memoizer (D : DICT) : MEMOIZER with type key = D.key =
 struct
+  open Lazy;;
+     
   type key = D.key
 
-  let rec  memo (f: (key -> 'a) -> (key -> 'a)): (key -> 'a) =
-    let table = D.empty in
-    (fun g x ->
-     if D.mem x table then D.find x table
-     else
-       (let g' = memo g in
-	let s = f g' x in
-	D.add x s table; s)) f 
+  let history = lazy(ref (D.empty));;
+		    
+  let rec memo (f: (key -> 'a) -> (key -> 'a)): (key -> 'a) =
+    let f_memoed (g: (key -> 'a) -> (key -> 'a))(x: key): 'a =
+      try D.find x !(force history) with 
+      | Not_found ->
+	 let g' = memo g in
+	 let result = f g' x in
+	 ((force history) := D.add x result !(force history); 
+	 result)
+    in
+    f_memoed f
+	     
 end
