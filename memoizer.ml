@@ -64,5 +64,12 @@ module Memoizer (D : DICT) : MEMOIZER with type key = D.key =
 struct
   type key = D.key
 
-  let memo _ = failwith "unimplemented"
+  let rec  memo (f: (key -> 'a) -> (key -> 'a)): (key -> 'a) =
+    let table = D.empty in
+    (fun g x ->
+     if D.mem x table then D.find x table
+     else
+       (let g' = memo g in
+	let s = f g' x in
+	D.add x s table; s)) f 
 end
