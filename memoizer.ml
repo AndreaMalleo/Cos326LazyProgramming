@@ -64,16 +64,15 @@ struct
   open Lazy;;
      
   type key = D.key
-
-  let history = lazy(ref (D.empty));;
 		    
   let rec memo (f: (key -> 'a) -> (key -> 'a)): (key -> 'a) =
-    let f_memoed (g: (key -> 'a) -> (key -> 'a))(x: key): 'a =
+    let history =  lazy(ref (D.empty)) in
+    let rec f_memoed g x = 
       try D.find x !(force history) with 
       | Not_found ->
-	 let g' = memo g in
+	 let g' = f_memoed g in
 	 let result = f g' x in
-	 ((force history) := D.add x result !(force history); 
+ 	 ((force history) := D.add x result !(force history); 
 	 result)
     in
     f_memoed f
