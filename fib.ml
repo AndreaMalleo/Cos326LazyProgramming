@@ -79,7 +79,11 @@ module ManualMemoedFib = MemoFib(Map.Make(IntOrder));;
 module AutoMemoedFib : FIB =
 struct
 
-  let fib _ = failwith "unimplemented"
+  let fib_body (recurse: int-> int) (n:int): int =
+    if n > 1 then recurse (n-1) + recurse (n-2) 
+      else n
+
+  let fib (n:int) = Memoizer.memo fib_body n 
 
 end;;
 
