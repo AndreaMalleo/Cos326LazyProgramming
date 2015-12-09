@@ -57,8 +57,7 @@ struct
     (fun n -> if D.mem n table then D.find n table
 	      else
 		(let s = f n in
-		D.add n s table;
-		s))   
+		D.add n s table; s))   
   ;;
     
   let rec fib (n:int): int =
