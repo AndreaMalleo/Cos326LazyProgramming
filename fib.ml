@@ -84,14 +84,16 @@ module ManualMemoedFib = MemoFib(Map.Make(IntOrder));;
   
 module AutoMemoedFib : FIB =
 struct
-
+  open Lazy;;
   module AutoMemoizer = Memoizer(Map.Make(IntOrder));;
 				   
   let fib_body (recurse: int-> int) (n:int): int =
     if n > 1 then recurse (n-1) + recurse (n-2) 
       else n
 
-  let fib (n:int) = AutoMemoizer.memo fib_body n 
+  let memoed_fib = lazy(AutoMemoizer.memo fib_body)
+		       
+  let fib (n:int) = force memoed_fib n 
 
 end;;
 

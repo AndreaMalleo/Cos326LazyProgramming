@@ -1,7 +1,8 @@
 open Memoizer
 open Timing
 open Base
-
+open Lazy
+       
 type base = Base.base;;
 type dna = Base.dna;;
 
@@ -61,7 +62,8 @@ let lcs (recurse: dna*dna -> dna) ((s1,s2) : dna*dna) : dna =
 	Base.longer_dna_of (recurse (s1, ys)) (recurse (xs, s2))
 
 
-let fast_lcs (ds : dna * dna) : dna =  LCSMemoizer.memo lcs ds;;
+let memoed_lcs = lazy(LCSMemoizer.memo lcs)
+let fast_lcs (ds : dna * dna) : dna = force memoed_lcs ds;;
 
 
 (* Task 4.5 *)
