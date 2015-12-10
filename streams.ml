@@ -102,8 +102,10 @@ let rec nth (n:num) (s:'a stream) : 'a =
 
 let rec merge (s1:num stream) (s2:num stream) : num stream =
   lazy(
-      if (<=/) (head s1) (head s2) then
+      if (</) (head s1) (head s2) then
 	Cons(head s1, merge (tail s1) s2)
+      else if (=/) (head s1) (head s2) then
+	Cons(head s1, merge (tail s1) (tail s2))
       else
 	Cons (head s2, merge (tail s2) s1))
 ;;
